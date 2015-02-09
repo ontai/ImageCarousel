@@ -1,4 +1,4 @@
-package pap.tuozon.com.pictureautoplayer.view;
+package cn.jun.android.image.carousel.view;
 
 import android.content.Context;
 import android.net.Uri;
@@ -15,38 +15,40 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import pap.tuozon.com.pictureautoplayer.R;
+import cn.jun.android.image.carousel.R;
+
 
 /**
  * Created by Jun on 2015/2/3.
  */
-public class PictureAutoPlayerView extends RelativeLayout implements View.OnClickListener {
+public class CarouselView extends RelativeLayout implements View.OnClickListener {
 
 
-    private static final String TAG = "PictureAutoPlayerView";
+    private static final String TAG = "CarouselView";
 
     // 自动播放时间间隔
     private static final long TIME_GAP = 5000;
 
     private ViewPager viewPager;
 
+    // 页面是否已完成加载
     private boolean isFinishInflate = false;
+    // 是否已初始化
     private boolean isInit = false;
-
+    // 展示的视图
     private List<View> mViews = null;
 
     private OnPageClickListener mOnPageClickListener = null;
 
-//    private ViewPager.OnPageChangeListener mOnPageChangeListener;
+    private ViewPager.OnPageChangeListener mOnPageChangeListener = new CarsouselPageChangedListener();
 
-    public PictureAutoPlayerView(Context context, AttributeSet attrs) {
+    public CarouselView(Context context, AttributeSet attrs) {
         super(context, attrs);
         Log.i(TAG, "#PictureAutoPlayerView(Context context, AttributeSet attrs)");
     }
@@ -56,18 +58,24 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
         super.onFinishInflate();
         Log.i(TAG, "#onFinishInflate");
         isFinishInflate = true;
-        if (mViews != null && !isInit) {
-            init();
-        }
+        // 初始化
+        init();
     }
 
-//    public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
-//        mOnPageChangeListener = onPageChangeListener;
-//    }
+    public void setOnPageChangeListener(ViewPager.OnPageChangeListener onPageChangeListener) {
+        mOnPageChangeListener = onPageChangeListener;
+        if (viewPager != null && mOnPageChangeListener != null) {
+            viewPager.setOnPageChangeListener(mOnPageChangeListener);
+        }
+    }
 
     private void init() {
 
         if (mViews == null) {
+            return;
+        }
+
+        if (!isFinishInflate) {
             return;
         }
 
@@ -78,19 +86,7 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
         isInit = true;
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(new MyPageAdapter(mViews));
-        viewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-
-                RadioGroup tipsLayout = (RadioGroup) findViewById(R.id.page_cusor_radioGroup);
-                for (int i = tipsLayout.getChildCount() - 1; i >= 0; i--) {
-                    RadioButton rb = (RadioButton)tipsLayout.getChildAt(i);
-                    rb.setChecked(false);
-                }
-                RadioButton rb = (RadioButton)tipsLayout.getChildAt(position);
-                rb.setChecked(true);
-            }
-        });
+        viewPager.setOnPageChangeListener(mOnPageChangeListener);
         viewPager.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -111,13 +107,6 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
             }
         });
 
-//        // 如果添加页面点击监听器，则页面点击监听器替代视图原有的点击监听器（如果有）
-//        if (mOnPageClickListener != null) {
-//            for (View view:mViews) {
-//                view.setOnClickListener(this);
-//            }
-//        }
-
         RadioGroup tipsLayout = (RadioGroup) findViewById(R.id.page_cusor_radioGroup);
         tipsLayout.removeAllViews();
 
@@ -134,6 +123,10 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
         }
     }
 
+    /**
+     * 设置drawable资源
+     * @param ids drawable资源ID数组
+     */
     public void setImageResources(int[] ids) {
         if (ids == null || ids.length == 0) {
             return;
@@ -151,15 +144,23 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
             mViews.add(iv);
         }
 
-        if (isFinishInflate && !isInit) {
-            init();
-        }
+        init();
     }
 
+    /**
+     * 设置图片URL资源
+     * @param urls
+     */
     public void setImageResources(String[] urls) {
 
         if (urls == null || urls.length == 0) {
             return;
+        }
+
+        if (mViews == null) {
+            mViews = new ArrayList<View>();
+        } else {
+            mViews.clear();
         }
 
         for (int i = urls.length - 1; i >= 0; i--) {
@@ -176,32 +177,24 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
             mViews.add(iv);
         }
 
-        if (isFinishInflate && !isInit) {
-            init();
-        }
+        init();
     }
 
 //    public void setImageFiles(String[] paths) {
 //
 //    }
 
+    /**
+     * 直接设置视图
+     * @param views
+     */
     public void setViews(List<View> views) {
 
         Log.i(TAG, "#setViews isFinishInflate = " + isFinishInflate + " and isInit = " + isInit);
         mViews = views;
-        if (isFinishInflate && !isInit) {
-            init();
-        }
 
-    }
+        init();
 
-    public void start() {
-        mHandler.removeMessages(0);
-        mHandler.sendEmptyMessageDelayed(0, TIME_GAP);
-    }
-
-    public void stop() {
-        mHandler.removeMessages(0);
     }
 
     @Override
@@ -209,7 +202,7 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
         for (int i = mViews.size() - 1; i >= 0; i--) {
             View view = mViews.get(i);
             if (v == view) {
-                if(mOnPageClickListener != null) {
+                if (mOnPageClickListener != null) {
                     mOnPageClickListener.onPageClick(i);
                 }
                 break;
@@ -276,25 +269,51 @@ public class PictureAutoPlayerView extends RelativeLayout implements View.OnClic
     protected void onWindowVisibilityChanged(int visibility) {
         super.onWindowVisibilityChanged(visibility);
         Log.i(TAG, "onWindowVisibilityChanged visibility = " + visibility);
+        mHandler.removeMessages(0);
         if (visibility == VISIBLE) {
-            start();
-        } else {
-            stop();
+            mHandler.sendEmptyMessageDelayed(0, TIME_GAP);
         }
     }
 
+    /**
+     * 添加页面点击监听器
+     *
+     * @param onPageClickListener
+     */
     public void setOnPageClickListener(OnPageClickListener onPageClickListener) {
         mOnPageClickListener = onPageClickListener;
 
         // 如果添加页面点击监听器，则页面点击监听器替代视图原有的点击监听器（如果有）
         if (mOnPageClickListener != null) {
-            for (View view:mViews) {
+            for (View view : mViews) {
                 view.setOnClickListener(this);
             }
         }
     }
 
+    /**
+     * 页面点击事件回调
+     */
     public interface OnPageClickListener {
+
+        /**
+         * @param position 点击的页面的顺序
+         */
         public void onPageClick(int position);
     }
+
+    private class CarsouselPageChangedListener extends ViewPager.SimpleOnPageChangeListener {
+        @Override
+        public void onPageSelected(int position) {
+            super.onPageSelected(position);
+            RadioGroup tipsLayout = (RadioGroup) findViewById(R.id.page_cusor_radioGroup);
+            for (int i = tipsLayout.getChildCount() - 1; i >= 0; i--) {
+                RadioButton rb = (RadioButton) tipsLayout.getChildAt(i);
+                rb.setChecked(false);
+            }
+            RadioButton rb = (RadioButton) tipsLayout.getChildAt(position);
+            rb.setChecked(true);
+        }
+    }
+
 }

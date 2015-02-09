@@ -1,35 +1,30 @@
-package pap.tuozon.com.pictureautoplayer;
+package cn.jun.android.image.carousel;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import pap.tuozon.com.pictureautoplayer.view.PictureAutoPlayerView;
+import cn.jun.android.image.carousel.view.CarouselView;
 
 
 public class MainActivity extends ActionBarActivity {
+
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        PictureAutoPlayerView papv = (PictureAutoPlayerView)findViewById(R.id.pictureplay);
-        List<View> views = new ArrayList<View>();
+        CarouselView papv = (CarouselView)findViewById(R.id.pictureplay);
         int[] resIds = {R.drawable.i1,R.drawable.i2,R.drawable.i3,R.drawable.i4};
         papv.setImageResources(resIds);
-        papv.setOnPageClickListener(new PictureAutoPlayerView.OnPageClickListener() {
+        papv.setOnPageClickListener(new CarouselView.OnPageClickListener() {
             @Override
             public void onPageClick(int position) {
-                Toast.makeText(getBaseContext(), "#onPageClick position = " + position, Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "#onPageClick position = " + position);
             }
         });
     }

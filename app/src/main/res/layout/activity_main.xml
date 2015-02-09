@@ -3,7 +3,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <include layout="@layout/picture_autoplay_view" android:id="@+id/pictureplay"
+    <include layout="@layout/carousel_view" android:id="@+id/pictureplay"
         android:layout_width="match_parent"
         android:layout_height="360dp"/>
 
